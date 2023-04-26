@@ -1,18 +1,15 @@
-import Image from "next/image";
 import { Inter } from "next/font/google";
 
 import * as runtime from "react/jsx-runtime";
 import * as provider from "@mdx-js/react";
-const inter = Inter({ subsets: ["latin"] });
 import { MDXProvider } from "@mdx-js/react";
-import { Example } from "../componets";
 import { evaluateSync } from "@mdx-js/mdx";
 import React, { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/router";
 
-const opts = {
-  ...provider,
-  ...runtime,
-};
+function Example({ data }) {
+  return <h1>Hello {data}</h1>;
+}
 
 function useMDX(source) {
   const [exports, setExports] = useState({ default: undefined });
@@ -22,8 +19,6 @@ function useMDX(source) {
       const exports = evaluateSync(source, {
         ...provider,
         ...runtime,
-        //remarkPlugins: [remarkGfm],
-        // rehypePlugins: [rehypeHighlight],
       });
       setExports(exports);
     };
@@ -34,17 +29,21 @@ function useMDX(source) {
 }
 
 function MyComponent(props) {
-  const currentRoute = "customers/test_l9q0r513";
+  const router = useRouter();
+  const { slug } = router.query;
+
+  const currentRoute = slug && slug.join("/");
   const fileToFetch = `${currentRoute}/${props.file}`;
   const [content, setContent] = useState(null);
   useEffect(() => {
-    fetch(`/api/content/airview-empty/mcuckson?path=${fileToFetch}`)
-      .then((res) => res.json())
-      .then((data) => {
-        const parsedContent = JSON.parse(data.content);
-        setContent(parsedContent);
-      });
-  }, []);
+    if (currentRoute)
+      fetch(`/api/content/airview-empty/mcuckson?path=${fileToFetch}`)
+        .then((res) => res.json())
+        .then((data) => {
+          const parsedContent = JSON.parse(data.content);
+          setContent(parsedContent);
+        });
+  }, [currentRoute]);
 
   return content && <Example data={content.data} />;
 }
